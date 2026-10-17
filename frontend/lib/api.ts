@@ -91,9 +91,19 @@ export const EXPENSE_CATEGORIES = [
   "Other Expense",
 ] as const;
 
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://ec2-13-126-4-165.ap-south-1.compute.amazonaws.com"
-).replace(/\/+$/, "");
+const getApiBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl) {
+    const clean = envUrl
+      .trim()
+      .replace(/^[\s\\"'`]+|[\s\\"'`]+$/g, "")
+      .replace(/\/+$/, "");
+    if (clean) return clean;
+  }
+  return "http://13.126.4.165";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Format currency to INR using Indian numbering system (e.g. ₹50,000, ₹1,25,000).
