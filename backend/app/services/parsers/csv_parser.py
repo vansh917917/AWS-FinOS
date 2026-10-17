@@ -71,6 +71,7 @@ class CSVStatementParser(BaseStatementParser):
             credit_idx = None
             amount_idx = None
             type_idx = None
+            category_idx = None
 
             for idx, col in enumerate(lower_row):
                 # Date
@@ -81,6 +82,10 @@ class CSVStatementParser(BaseStatementParser):
                 elif any(k in col for k in ("description", "narration", "particulars", "details", "remark", "payee")):
                     if desc_idx is None:
                         desc_idx = idx
+                # Category
+                elif any(k in col for k in ("category", "cat", "classification")):
+                    if category_idx is None:
+                        category_idx = idx
                 # Debit
                 elif any(k in col for k in ("debit", "withdrawal", "dr")):
                     debit_idx = idx
@@ -101,6 +106,7 @@ class CSVStatementParser(BaseStatementParser):
                     return i, {
                         "date": date_idx,
                         "description": desc_idx,
+                        "category": category_idx,
                         "debit": debit_idx,
                         "credit": credit_idx,
                         "amount": amount_idx,
@@ -185,10 +191,13 @@ class CSVStatementParser(BaseStatementParser):
         if not norm_date:
             error = f"Unparseable date: '{raw_date}'" if not error else error
 
+        raw_cat = get_val("category") or None
+
         return RawParsedRow(
             date_str=norm_date,
             description=description,
             amount=amount,
             direction=direction,
             error=error,
+            category=raw_cat,
         )

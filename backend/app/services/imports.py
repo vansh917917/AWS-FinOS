@@ -17,9 +17,10 @@ from app.schemas.imports import (
     RowStatus,
     ImportStatus,
 )
-from app.schemas.transactions import TransactionCreate
+from app.schemas.transactions import TransactionCreate, INCOME_CATEGORIES, EXPENSE_CATEGORIES
 from app.services.parsers.csv_parser import CSVStatementParser
 from app.services.parsers.pdf_parser import PDFStatementParser
+from app.services.merchant_normalizer import MerchantNormalizer
 
 
 class ImportService:
@@ -122,7 +123,22 @@ class ImportService:
                     default_selected = True
                     batch_fingerprints.add(fp)
 
-            default_category = "Other Income" if row.direction == "income" else "Other Expense"
+            # Determine proper category distribution
+            matched_category = None
+            if getattr(row, "category", None) and str(row.category).strip():
+                matched_category = str(row.category).strip()
+
+            if not matched_category:
+                _, suggested_cat = MerchantNormalizer.match_known_merchant(row.description or "")
+                if suggested_cat:
+                    matched_category = suggested_cat
+
+            if row.direction == "income":
+                assigned_category = matched_category if matched_category in INCOME_CATEGORIES else "Other Income"
+            elif row.direction == "expense":
+                assigned_category = matched_category if matched_category in EXPENSE_CATEGORIES else "Other Expense"
+            else:
+                assigned_category = "Other Expense"
 
             preview_items.append(
                 PreviewRowItem(
@@ -131,7 +147,7 @@ class ImportService:
                     description=row.description or "Statement Transaction",
                     amount=float(row.amount) if row.amount is not None else None,
                     type=row.direction if row.direction in ("income", "expense") else None,
-                    category=default_category,
+                    category=assigned_category,
                     status=status_enum,
                     status_reason=status_reason,
                     is_selectable=is_selectable,

@@ -1,49 +1,49 @@
-Date,Description,Debit,Credit
-2026-09-01,Monthly Salary from TechCorp,0,95000
-2026-09-02,Apartment Monthly Rent,24000,0
-2026-09-03,Starbucks Coffee,360,0
-2026-09-04,Blinkit Instant Groceries,680,0
-2026-09-05,Uber Trip Downtown Office,480,0
-2026-09-06,Amazon Electronics Purchase,3499,0
-2026-09-07,Swiggy Dinner Delivery,540,0
-2026-09-08,Freelance Web Development,0,25000
-2026-09-09,Shell Fuel Station Petrol,2200,0
-2026-09-10,DMart Supermarket Essentials,4650,0
-2026-09-11,Netflix Monthly Subscription,649,0
-2026-09-12,Airtel Broadband Internet Bill,1179,0
-2026-09-13,Cult.fit Annual Fitness Center,1500,0
-2026-09-14,Apollo Pharmacy Medicines,840,0
-2026-09-15,Zomato Weekend Lunch,720,0
-2026-09-16,Rapido Bike Commute,120,0
-2026-09-17,Spotify Premium Family,179,0
-2026-09-18,Myntra Clothing Order,2890,0
-2026-09-19,Zepto Daily Essentials,390,0
-2026-09-20,BESCOM Electricity Utility Bill,1840,0
-2026-09-22,BookMyShow Weekend Movie,850,0
-2026-09-24,Domino's Pizza Delivery,620,0
-2026-09-25,Urban Company Home Cleaning,1299,0
-2026-09-27,Metro Rail Smart Card Recharge,500,0
-2026-09-29,Quarterly Bank Interest Credit,0,1420
-2026-09-30,BigBasket Fresh Vegetables,1680,0
-2026-10-01,Monthly Salary from TechCorp,0,95000
-2026-10-02,Apartment Monthly Rent,24000,0
-2026-10-03,Starbucks Coffee Reserve,420,0
-2026-10-04,Zepto Quick Grocery Delivery,540,0
-2026-10-05,Ola Cabs Ride to Airport,780,0
-2026-10-06,Flipkart Festive Sale Shopping,4890,0
-2026-10-07,Swiggy Lunch Order,380,0
-2026-10-08,Freelance UI UX Consulting,0,18000
-2026-10-09,HP Fuel Station Petrol,2500,0
-2026-10-10,DMart Grocery Store,5120,0
-2026-10-11,Amazon Prime Membership,1499,0
-2026-10-12,Jio Mobile Recharge Plan,749,0
-2026-10-13,Tata 1mg Prescription Healthcare,1150,0
-2026-10-14,McDonald's Burger Meal,430,0
-2026-10-15,Uber Ride City Center,390,0
-2026-10-16,YouTube Premium Family,189,0
-2026-10-17,Indane Cooking Gas Utility,950,0
-2026-10-18,Blinkit Midnight Snacks,410,0
-2026-10-19,PVR Cinemas Multiplex Tickets,920,0
-2026-10-20,Zomato Dinner with Friends,1180,0
-2026-10-22,Nykaa Cosmetics Purchase,1650,0
-2026-10-25,Investment Mutual Fund Dividend,0,4500
+Date,Description,Category,Debit,Credit
+2026-09-01,Monthly Salary from TechCorp,Salary,0,95000
+2026-09-02,Apartment Monthly Rent,Rent,24000,0
+2026-09-03,Starbucks Coffee,Food,360,0
+2026-09-04,Blinkit Instant Groceries,Groceries,680,0
+2026-09-05,Uber Trip Downtown Office,Transportation,480,0
+2026-09-06,Amazon Electronics Purchase,Shopping,3499,0
+2026-09-07,Swiggy Dinner Delivery,Food,540,0
+2026-09-08,Freelance Web Development,Freelance,0,25000
+2026-09-09,Shell Fuel Station Petrol,Transportation,2200,0
+2026-09-10,DMart Supermarket Essentials,Groceries,4650,0
+2026-09-11,Netflix Monthly Subscription,Subscriptions,649,0
+2026-09-12,Airtel Broadband Internet Bill,Bills & Utilities,1179,0
+2026-09-13,Cult.fit Annual Fitness Center,Personal Care,1500,0
+2026-09-14,Apollo Pharmacy Medicines,Healthcare,840,0
+2026-09-15,Zomato Weekend Lunch,Food,720,0
+2026-09-16,Rapido Bike Commute,Transportation,120,0
+2026-09-17,Spotify Premium Family,Subscriptions,179,0
+2026-09-18,Myntra Clothing Order,Shopping,2890,0
+2026-09-19,Zepto Daily Essentials,Groceries,390,0
+2026-09-20,BESCOM Electricity Utility Bill,Bills & Utilities,1840,0
+2026-09-22,BookMyShow Weekend Movie,Entertainment,850,0
+2026-09-24,Domino's Pizza Delivery,Food,620,0
+2026-09-25,Urban Company Home Cleaning,Personal Care,1299,0
+2026-09-27,Metro Rail Smart Card Recharge,Transportation,500,0
+2026-09-29,Quarterly Bank Interest Credit,Interest,0,1420
+2026-09-30,BigBasket Fresh Vegetables,Groceries,1680,0
+2026-10-01,Monthly Salary from TechCorp,Salary,0,95000
+2026-10-02,Apartment Monthly Rent,Rent,24000,0
+2026-10-03,Starbucks Coffee Reserve,Food,420,0
+2026-10-04,Zepto Quick Grocery Delivery,Groceries,540,0
+2026-10-05,Ola Cabs Ride to Airport,Transportation,780,0
+2026-10-06,Flipkart Festive Sale Shopping,Shopping,4890,0
+2026-10-07,Swiggy Lunch Order,Food,380,0
+2026-10-08,Freelance UI UX Consulting,Freelance,0,18000
+2026-10-09,HP Fuel Station Petrol,Transportation,2500,0
+2026-10-10,DMart Grocery Store,Groceries,5120,0
+2026-10-11,Amazon Prime Membership,Subscriptions,1499,0
+2026-10-12,Jio Mobile Recharge Plan,Bills & Utilities,749,0
+2026-10-13,Tata 1mg Prescription Healthcare,Healthcare,1150,0
+2026-10-14,McDonald's Burger Meal,Food,430,0
+2026-10-15,Uber Ride City Center,Transportation,390,0
+2026-10-16,YouTube Premium Family,Subscriptions,189,0
+2026-10-17,Indane Cooking Gas Utility,Bills & Utilities,950,0
+2026-10-18,Blinkit Midnight Snacks,Groceries,410,0
+2026-10-19,PVR Cinemas Multiplex Tickets,Entertainment,920,0
+2026-10-20,Zomato Dinner with Friends,Food,1180,0
+2026-10-22,Nykaa Cosmetics Purchase,Shopping,1650,0
+2026-10-25,Investment Mutual Fund Dividend,Other Income,0,4500

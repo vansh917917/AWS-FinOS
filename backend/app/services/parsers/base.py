@@ -12,6 +12,7 @@ class RawParsedRow:
     amount: Optional[Decimal] = None
     direction: str = "ambiguous"  # "income", "expense", "ambiguous", "invalid"
     error: Optional[str] = None
+    category: Optional[str] = None
 
 
 class BaseStatementParser:

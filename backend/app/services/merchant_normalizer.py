@@ -53,6 +53,8 @@ KNOWN_MERCHANT_PATTERNS = [
     (r"\b(act\s*fibernet)\b", "ACT Fibernet", "Bills & Utilities"),
     (r"\b(water\s*board|jal\s*board)\b", "Water Utility", "Bills & Utilities"),
     (r"\b(indane|hp\s*gas|bharat\s*gas|piped\s*gas)\b", "Cooking Gas Utility", "Bills & Utilities"),
+    # Rent & Housing
+    (r"\b(rent|landlord|house\s*rent|apartment\s*(?:monthly\s*)?rent)\b", "Apartment Rent", "Rent"),
     # Healthcare & Personal Care
     (r"\b(apollo\s*pharmacy|apollo)\b", "Apollo Pharmacy", "Healthcare"),
     (r"\b(pharmeasy|api\s*holdings)\b", "PharmEasy", "Healthcare"),
@@ -60,8 +62,10 @@ KNOWN_MERCHANT_PATTERNS = [
     (r"\b(cult\.fit|cultfit|curefit)\b", "Cult.fit", "Personal Care"),
     (r"\b(urban\s*company|urban\s*clap)\b", "Urban Company", "Personal Care"),
     # Income Sources
-    (r"\b(salary|payroll|direct\s*dep|monthly\s*wages)\b", "Employer Payroll", "Salary"),
+    (r"\b(salary|payroll|techcorp|direct\s*dep|monthly\s*wages)\b", "Employer Payroll", "Salary"),
+    (r"\b(freelance|consulting|contract)\b", "Freelance Client", "Freelance"),
     (r"\b(int\.?\s*pd|interest\s*credit|sb\s*int|fd\s*int)\b", "Bank Interest", "Interest"),
+    (r"\b(dividend|mutual\s*fund|investment|zerodha|groww)\b", "Investment Dividend", "Other Income"),
 ]
 
 
