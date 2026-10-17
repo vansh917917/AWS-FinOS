@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { getStoredToken } from "@/lib/auth";
 import {
   previewStatementImport,
   confirmStatementImport,
   getStatementImports,
+  resetUserData,
   ImportPreviewResponse,
   ImportConfirmResponse,
   PreviewRowItem,
@@ -28,6 +29,10 @@ import {
   Clock,
   AlertCircle,
   FileUp,
+  Trash2,
+  Filter,
+  Search,
+  PieChart,
 } from "lucide-react";
 
 export default function StatementImportPage() {
@@ -44,6 +49,9 @@ export default function StatementImportPage() {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [confirming, setConfirming] = useState<boolean>(false);
   const [confirmResult, setConfirmResult] = useState<ImportConfirmResponse | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchFilter, setSearchFilter] = useState<string>("");
+  const [resetting, setResetting] = useState<boolean>(false);
 
   // Import history states
   const [history, setHistory] = useState<StatementImportRecord[]>([]);
@@ -180,13 +188,70 @@ export default function StatementImportPage() {
     setSelectedIndices([]);
   };
 
-  // 6.5 Category Change in Preview
+  // 6.5 Category Change in Preview (synchronizes category and direction)
   const handleCategoryChange = (idx: number, newCat: string) => {
     if (!preview) return;
-    const updatedItems = preview.items.map((item) =>
-      item.index === idx ? { ...item, category: newCat } : item
+    const isIncome = INCOME_CATEGORIES.includes(newCat as any);
+    const newType: "income" | "expense" = isIncome ? "income" : "expense";
+    const updatedItems: PreviewRowItem[] = preview.items.map((item) =>
+      item.index === idx ? { ...item, category: newCat, type: newType } : item
     );
     setPreview({ ...preview, items: updatedItems });
+  };
+
+  // 6.6 Category Distribution Summary
+  const categoryDistribution = useMemo(() => {
+    if (!preview) return [];
+    const map: Record<string, { count: number; totalAmount: number; type: string }> = {};
+    preview.items.forEach((item) => {
+      const cat = item.category || (item.type === "income" ? "Other Income" : "Other Expense");
+      if (!map[cat]) {
+        map[cat] = { count: 0, totalAmount: 0, type: item.type || "expense" };
+      }
+      map[cat].count += 1;
+      map[cat].totalAmount += item.amount || 0;
+    });
+    return Object.entries(map)
+      .map(([category, data]) => ({ category, ...data }))
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+  }, [preview]);
+
+  // 6.7 Filtered preview items by category and search
+  const filteredPreviewItems = useMemo(() => {
+    if (!preview) return [];
+    return preview.items.filter((item) => {
+      const matchesCategory =
+        categoryFilter === "all" ||
+        (item.category || (item.type === "income" ? "Other Income" : "Other Expense")) === categoryFilter;
+      const matchesSearch =
+        !searchFilter ||
+        (item.description && item.description.toLowerCase().includes(searchFilter.toLowerCase())) ||
+        (item.category && item.category.toLowerCase().includes(searchFilter.toLowerCase()));
+      return matchesCategory && matchesSearch;
+    });
+  }, [preview, categoryFilter, searchFilter]);
+
+  // 6.8 Reset User Data
+  const handleResetAllData = async () => {
+    if (!accessToken) return;
+    if (!window.confirm("Are you sure you want to reset all financial data? This will clear all transactions, statement imports, budgets, and goals to zero.")) {
+      return;
+    }
+    setResetting(true);
+    setUploadError(null);
+    try {
+      await resetUserData(accessToken);
+      setPreview(null);
+      setSelectedFile(null);
+      setSelectedIndices([]);
+      setConfirmResult(null);
+      await loadHistory();
+      alert("All financial data has been reset to zero.");
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to reset financial data.");
+    } finally {
+      setResetting(false);
+    }
   };
 
   // 7. Confirm Import
@@ -275,13 +340,24 @@ export default function StatementImportPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Statement Import
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Upload bank or credit card statements in CSV or text-based PDF format. FinOS extracts transactions, screens for duplicates, and previews each row before import.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            Statement Import
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Upload bank or credit card statements in CSV or text-based PDF format. FinOS extracts transactions, screens for duplicates, and previews each row before import.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleResetAllData}
+          disabled={resetting}
+          className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-colors disabled:opacity-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {resetting ? "Resetting Data..." : "Reset Data to ₹0"}
+        </button>
       </div>
 
       {/* Success Notification Banner */}
@@ -494,6 +570,62 @@ export default function StatementImportPage() {
               </div>
             </div>
 
+            {/* Category Distribution Pills */}
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  <PieChart className="h-3.5 w-3.5 text-slate-500" />
+                  Category Distribution ({categoryDistribution.length} categories detected)
+                </div>
+                {categoryFilter !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => setCategoryFilter("all")}
+                    className="text-xs text-sky-600 hover:text-sky-800 font-medium"
+                  >
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter("all")}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    categoryFilter === "all"
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  <span>All</span>
+                  <span className="text-[10px] opacity-75">({preview.items.length})</span>
+                </button>
+                {categoryDistribution.map((item) => {
+                  const isActive = categoryFilter === item.category;
+                  const isIncome = item.type === "income";
+                  return (
+                    <button
+                      key={item.category}
+                      type="button"
+                      onClick={() => setCategoryFilter(isActive ? "all" : item.category)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors border ${
+                        isActive
+                          ? "bg-sky-600 text-white border-sky-600 shadow-sm"
+                          : isIncome
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span>{item.category}</span>
+                      <span className="text-[10px] opacity-75 font-mono">
+                        ({item.count} · {formatINR(item.totalAmount)})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Quick Filter & Selection Bar */}
             <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-t border-slate-100 pt-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -550,13 +682,49 @@ export default function StatementImportPage() {
 
           {/* Extracted Transactions Table */}
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-            <div className="border-b border-slate-200 bg-slate-50 px-6 py-3.5 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-                Transaction Preview List ({preview.items.length} rows)
-              </h3>
-              <span className="text-xs text-slate-500">
-                Unchecked transactions will not be imported
-              </span>
+            <div className="border-b border-slate-200 bg-slate-50 px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+                  Transaction Preview ({filteredPreviewItems.length} of {preview.items.length} rows)
+                </h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    placeholder="Search description..."
+                    className="pl-8 pr-2.5 py-1 text-xs rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-sky-500 w-44"
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <Filter className="h-3.5 w-3.5 text-slate-400" />
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="text-xs rounded-lg border border-slate-200 bg-white px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                    aria-label="Filter preview table by category"
+                  >
+                    <option value="all">All Categories ({preview.items.length})</option>
+                    <optgroup label="Income Categories">
+                      {INCOME_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Expense Categories">
+                      {EXPENSE_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -603,71 +771,81 @@ export default function StatementImportPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-normal">
-                  {preview.items.map((item) => {
-                    const isSelected = selectedIndices.includes(item.index);
-                    return (
-                      <tr
-                        key={item.index}
-                        className={`transition-colors ${
-                          !item.is_selectable
-                            ? "bg-slate-50/60 opacity-60"
-                            : isSelected
-                            ? "bg-sky-50/30 hover:bg-sky-50/50"
-                            : "hover:bg-slate-50/80"
-                        }`}
-                      >
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            disabled={!item.is_selectable}
-                            onChange={() => handleToggleRow(item.index)}
-                            aria-label={`Select row ${item.index + 1}`}
-                            className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 disabled:opacity-40"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-xs font-medium text-slate-800 whitespace-nowrap">
-                          {item.date || "Invalid Date"}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-700 max-w-xs truncate">
-                          {item.description || "Statement Transaction"}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {item.type === "income" ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Income
-                            </span>
-                          ) : item.type === "expense" ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                              Expense
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                              Ambiguous
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
-                          <select
-                            value={item.category || (item.type === "income" ? "Other Income" : "Other Expense")}
-                            disabled={!item.is_selectable}
-                            onChange={(e) => handleCategoryChange(item.index, e.target.value)}
-                            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
-                            aria-label={`Category for transaction ${item.index + 1}`}
-                          >
-                            {item.type === "income"
-                              ? INCOME_CATEGORIES.map((cat) => (
-                                  <option key={cat} value={cat}>
-                                    {cat}
-                                  </option>
-                                ))
-                              : EXPENSE_CATEGORIES.map((cat) => (
+                  {filteredPreviewItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-8 text-center text-xs text-slate-500">
+                        No transactions match the selected filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPreviewItems.map((item) => {
+                      const isSelected = selectedIndices.includes(item.index);
+                      return (
+                        <tr
+                          key={item.index}
+                          className={`transition-colors ${
+                            !item.is_selectable
+                              ? "bg-slate-50/60 opacity-60"
+                              : isSelected
+                              ? "bg-sky-50/30 hover:bg-sky-50/50"
+                              : "hover:bg-slate-50/80"
+                          }`}
+                        >
+                          <td className="px-4 py-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={!item.is_selectable}
+                              onChange={() => handleToggleRow(item.index)}
+                              aria-label={`Select row ${item.index + 1}`}
+                              className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 disabled:opacity-40"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-xs font-medium text-slate-800 whitespace-nowrap">
+                            {item.date || "Invalid Date"}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-700 max-w-xs truncate">
+                            {item.description || "Statement Transaction"}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {item.type === "income" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Income
+                              </span>
+                            ) : item.type === "expense" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                Expense
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                Ambiguous
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                            <select
+                              value={item.category || (item.type === "income" ? "Other Income" : "Other Expense")}
+                              disabled={!item.is_selectable}
+                              onChange={(e) => handleCategoryChange(item.index, e.target.value)}
+                              className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                              aria-label={`Category for transaction ${item.index + 1}`}
+                            >
+                              <optgroup label="Expense Categories">
+                                {EXPENSE_CATEGORIES.map((cat) => (
                                   <option key={cat} value={cat}>
                                     {cat}
                                   </option>
                                 ))}
-                          </select>
-                        </td>
+                              </optgroup>
+                              <optgroup label="Income Categories">
+                                {INCOME_CATEGORIES.map((cat) => (
+                                  <option key={cat} value={cat}>
+                                    {cat}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            </select>
+                          </td>
                         <td className="px-4 py-3 text-xs font-semibold text-right whitespace-nowrap">
                           {item.amount !== null ? (
                             <span
@@ -686,8 +864,9 @@ export default function StatementImportPage() {
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
+                  })
+                )}
+              </tbody>
               </table>
             </div>
           </div>

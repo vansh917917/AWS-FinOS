@@ -301,3 +301,15 @@ class TransactionService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to calculate cash flow summary: {str(e)}",
             )
+
+    @classmethod
+    def reset_user_data(cls, user_id: str, token: Optional[str] = None) -> Dict[str, Any]:
+        with get_db() as conn:
+            conn.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM statement_imports WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM budgets WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM goals WHERE user_id = ?", (user_id,))
+        return {
+            "status": "success",
+            "message": "All financial transactions, budgets, goals, and statement imports have been reset to zero.",
+        }

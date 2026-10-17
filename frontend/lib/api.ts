@@ -960,5 +960,26 @@ export async function getBudgetAnalytics(
   return await response.json();
 }
 
+/**
+ * Reset all transactions, statement imports, budgets, and goals for the current user.
+ */
+export async function resetUserData(
+  accessToken: string
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/transactions/reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to reset data: ${response.status}`);
+  }
+  return await response.json();
+}
+
 
 

@@ -141,3 +141,17 @@ def delete_transaction(
         token=user.get("token"),
         transaction_id=transaction_id,
     )
+
+
+# 7. Reset all transactions and financial data
+@router.post("/reset")
+def reset_transactions(
+    user: Dict[str, Any] = Depends(get_current_user),
+):
+    """
+    Reset all user financial data (transactions, imports, budgets, goals) to zero.
+    """
+    return TransactionService.reset_user_data(
+        user_id=user["id"],
+        token=user.get("token"),
+    )

@@ -17,7 +17,7 @@ from app.schemas.imports import (
     RowStatus,
     ImportStatus,
 )
-from app.schemas.transactions import TransactionCreate, INCOME_CATEGORIES, EXPENSE_CATEGORIES
+from app.schemas.transactions import TransactionCreate, INCOME_CATEGORIES, EXPENSE_CATEGORIES, ALL_CATEGORIES
 from app.services.parsers.csv_parser import CSVStatementParser
 from app.services.parsers.pdf_parser import PDFStatementParser
 from app.services.merchant_normalizer import MerchantNormalizer
@@ -126,12 +126,25 @@ class ImportService:
             # Determine proper category distribution
             matched_category = None
             if getattr(row, "category", None) and str(row.category).strip():
-                matched_category = str(row.category).strip()
+                raw_cat_str = str(row.category).strip()
+                for valid_cat in ALL_CATEGORIES:
+                    if raw_cat_str.lower() == valid_cat.lower():
+                        matched_category = valid_cat
+                        break
+                if not matched_category:
+                    matched_category = raw_cat_str
 
             if not matched_category:
                 _, suggested_cat = MerchantNormalizer.match_known_merchant(row.description or "")
                 if suggested_cat:
                     matched_category = suggested_cat
+
+            # If direction was ambiguous, infer from matched category if clearly income or expense
+            if row.direction == "ambiguous":
+                if matched_category in INCOME_CATEGORIES:
+                    row.direction = "income"
+                elif matched_category in EXPENSE_CATEGORIES:
+                    row.direction = "expense"
 
             if row.direction == "income":
                 assigned_category = matched_category if matched_category in INCOME_CATEGORIES else "Other Income"
@@ -284,11 +297,19 @@ class ImportService:
 
             date_val = item.get("date")
             amt_val = item.get("amount")
-            type_val = item.get("type")
             override = None
             if category_overrides:
                 override = category_overrides.get(idx) or category_overrides.get(str(idx))
-            cat_val = override or item.get("category") or ("Other Income" if type_val == "income" else "Other Expense")
+            cat_val = (override or item.get("category") or "").strip()
+
+            # Synchronize transaction type with category
+            if cat_val in INCOME_CATEGORIES:
+                type_val = "income"
+            elif cat_val in EXPENSE_CATEGORIES:
+                type_val = "expense"
+            elif not cat_val:
+                cat_val = "Other Income" if type_val == "income" else "Other Expense"
+
             desc_val = item.get("description") or ""
 
             if not date_val or amt_val is None or type_val not in ("income", "expense"):

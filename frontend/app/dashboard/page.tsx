@@ -15,6 +15,7 @@ import {
   getCategoryAnalytics,
   getTopExpenses,
   getBudgetAnalytics,
+  resetUserData,
 } from "@/lib/api";
 import CashFlowTrendChart from "@/components/CashFlowTrendChart";
 import CategorySpendingChart from "@/components/CategorySpendingChart";
@@ -29,6 +30,7 @@ import {
   Target,
   RefreshCw,
   ArrowRight,
+  Trash2,
 } from "lucide-react";
 
 type DateRangeOption = "this_month" | "last_month" | "last_3_months" | "last_6_months" | "this_year";
@@ -91,6 +93,7 @@ export default function DashboardPage() {
   // Budget Analytics
   const [budgetAnalytics, setBudgetAnalytics] = useState<BudgetAnalyticsResponse | null>(null);
   const [budgetLoading, setBudgetLoading] = useState<boolean>(true);
+  const [resetting, setResetting] = useState<boolean>(false);
 
   // Load Session
   useEffect(() => {
@@ -100,6 +103,27 @@ export default function DashboardPage() {
       setUserEmail("admin@finos.local");
     }
   }, []);
+
+  const handleResetAllData = async () => {
+    if (!accessToken) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to reset all financial data to zero? This will permanently delete all transactions, budgets, goals, and statement imports."
+      )
+    ) {
+      return;
+    }
+    setResetting(true);
+    try {
+      await resetUserData(accessToken);
+      await loadDashboardData(accessToken, dateRange);
+      alert("All financial data has been reset to zero.");
+    } catch (err: any) {
+      alert(err.message || "Failed to reset financial data");
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // Fetch all analytics for the selected date range
   const loadDashboardData = async (token: string, rangeOpt: DateRangeOption) => {
@@ -226,6 +250,15 @@ export default function DashboardPage() {
               <Target className="h-3.5 w-3.5 text-indigo-600" />
               Budgets & Goals
             </Link>
+            <button
+              type="button"
+              onClick={handleResetAllData}
+              disabled={resetting}
+              className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50 text-center"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {resetting ? "Resetting..." : "Reset Data to ₹0"}
+            </button>
           </div>
         </div>
       </div>
