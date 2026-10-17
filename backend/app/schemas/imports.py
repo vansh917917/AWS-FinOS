@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 
 
@@ -47,6 +47,7 @@ class ImportPreviewResponse(BaseModel):
 
 class ImportConfirmRequest(BaseModel):
     selected_indices: List[int] = Field(default_factory=list)
+    category_overrides: Optional[Dict[int, str]] = Field(default_factory=dict)
 
 
 class ImportConfirmResponse(BaseModel):

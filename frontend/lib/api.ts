@@ -399,7 +399,8 @@ export async function previewStatementImport(
 export async function confirmStatementImport(
   accessToken: string,
   importId: string,
-  selectedIndices: number[]
+  selectedIndices: number[],
+  categoryOverrides?: Record<number, string>
 ): Promise<ImportConfirmResponse> {
   const response = await fetch(
     `${API_BASE_URL}/api/v1/imports/${importId}/confirm`,
@@ -409,7 +410,10 @@ export async function confirmStatementImport(
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ selected_indices: selectedIndices }),
+      body: JSON.stringify({
+        selected_indices: selectedIndices,
+        category_overrides: categoryOverrides || {},
+      }),
     }
   );
 

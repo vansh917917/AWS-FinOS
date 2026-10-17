@@ -88,6 +88,7 @@ def confirm_statement_import(
         token=current_user.get("token"),
         import_id=import_id,
         selected_indices=payload.selected_indices,
+        category_overrides=payload.category_overrides,
     )
 
 

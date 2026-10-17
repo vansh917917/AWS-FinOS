@@ -215,6 +215,7 @@ class ImportService:
         token: Optional[str],
         import_id: str,
         selected_indices: List[int],
+        category_overrides: Optional[Dict[int, str]] = None,
     ) -> ImportConfirmResponse:
         with get_db() as conn:
             row = conn.execute(
@@ -284,7 +285,10 @@ class ImportService:
             date_val = item.get("date")
             amt_val = item.get("amount")
             type_val = item.get("type")
-            cat_val = item.get("category") or ("Other Income" if type_val == "income" else "Other Expense")
+            override = None
+            if category_overrides:
+                override = category_overrides.get(idx) or category_overrides.get(str(idx))
+            cat_val = override or item.get("category") or ("Other Income" if type_val == "income" else "Other Expense")
             desc_val = item.get("description") or ""
 
             if not date_val or amt_val is None or type_val not in ("income", "expense"):

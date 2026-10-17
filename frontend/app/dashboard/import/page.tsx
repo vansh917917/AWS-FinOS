@@ -12,6 +12,8 @@ import {
   PreviewRowItem,
   StatementImportRecord,
   formatINR,
+  INCOME_CATEGORIES,
+  EXPENSE_CATEGORIES,
 } from "@/lib/api";
 import {
   UploadCloud,
@@ -178,6 +180,15 @@ export default function StatementImportPage() {
     setSelectedIndices([]);
   };
 
+  // 6.5 Category Change in Preview
+  const handleCategoryChange = (idx: number, newCat: string) => {
+    if (!preview) return;
+    const updatedItems = preview.items.map((item) =>
+      item.index === idx ? { ...item, category: newCat } : item
+    );
+    setPreview({ ...preview, items: updatedItems });
+  };
+
   // 7. Confirm Import
   const handleConfirmImport = async () => {
     if (!accessToken || !preview) return;
@@ -190,10 +201,18 @@ export default function StatementImportPage() {
     setUploadError(null);
 
     try {
+      const categoryOverrides: Record<number, string> = {};
+      preview.items.forEach((item) => {
+        if (item.category) {
+          categoryOverrides[item.index] = item.category;
+        }
+      });
+
       const result = await confirmStatementImport(
         accessToken,
         preview.import_id,
-        selectedIndices
+        selectedIndices,
+        categoryOverrides
       );
       setConfirmResult(result);
       setPreview(null);
@@ -629,7 +648,25 @@ export default function StatementImportPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
-                          {item.category}
+                          <select
+                            value={item.category || (item.type === "income" ? "Other Income" : "Other Expense")}
+                            disabled={!item.is_selectable}
+                            onChange={(e) => handleCategoryChange(item.index, e.target.value)}
+                            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                            aria-label={`Category for transaction ${item.index + 1}`}
+                          >
+                            {item.type === "income"
+                              ? INCOME_CATEGORIES.map((cat) => (
+                                  <option key={cat} value={cat}>
+                                    {cat}
+                                  </option>
+                                ))
+                              : EXPENSE_CATEGORIES.map((cat) => (
+                                  <option key={cat} value={cat}>
+                                    {cat}
+                                  </option>
+                                ))}
+                          </select>
                         </td>
                         <td className="px-4 py-3 text-xs font-semibold text-right whitespace-nowrap">
                           {item.amount !== null ? (
